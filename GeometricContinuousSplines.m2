@@ -5,16 +5,43 @@ newPackage(
     Headline => "This is a package for geometrically continuous splines.",
     Authors => {{ Name => "Beihui Yuan", Email => "by238@cornell.edu", HomePage => "https://sites.google.com/view/beihuiyuan/home"}},
     AuxiliaryFiles => false,
-    DebuggingMode => false
+    DebuggingMode => false,
+    PackageImports => {"RationalPoints2"}
     )
 
 export {
+    "computeBaseField",
     "generateAmbientRing",
     "gSplineBasis",
+    "monomialBasisBiDegree",
     "monomialBasisT"
     }
 
 -* Code section *-
+---------------------------
+computeBaseField = method()
+---------------------------
+---------------------------
+--This method compute a field extension of QQ such that 
+--the transition map can be defined over. 
+---------------------------
+--Inputs:
+---------------------------
+--valences = list of valences. Each valence is a positive integer.
+---------------------------
+--Outputs:
+---------------------------
+--A field of extension over QQ.
+--usage: computeBaseField(valences)
+---------------------------
+computeBaseField(List):=(valences) ->(
+    n := lcm(valences);
+    x := symbol x; 
+    QQ[x];
+    f := sum for i from 0 to n-1 list x^i;
+    F := extField(QQ,f)
+    )
+
 ---------------------------
 generateAmbientRing = method()
 ---------------------------
@@ -24,18 +51,43 @@ generateAmbientRing = method()
 --Inputs:
 ---------------------------
 --E = list of edges. Each edge is a list with two vertices
+-- kk = base field
 ---------------------------
 --Outputs:
 ---------------------------
---A polynomial ring QQ[u_sigma,v_sigma:sigma in vert]
+--A polynomial ring kk[u_sigma,v_sigma:sigma in vert]
 --usage: generateAmbientRing(E)
 ---------------------------
-generateAmbientRing(List):=(E) ->(
+generateAmbientRing(List,Ring):=(E,kk) ->(
     vert := sort unique flatten E;
     u := symbol u;
     v := symbol v;
-    S := QQ[flatten for sigma in vert list {u_sigma,v_sigma}];
+    S := kk[flatten for sigma in vert list {u_sigma,v_sigma}];
     S
+    )
+
+---------------------------
+monomialBasisBiDegree = method()
+---------------------------
+--This method creates a list of monomial basis (for bi-degree)
+--for each coordinate ring with bi-degree no more than (d,d). 
+---------------------------
+--Inputs:
+---------------------------
+--E = list of edges. Each edge is a list with two vertices
+--S = ambient ring
+--deg = bi-degree
+---------------------------
+--Outputs:
+---------------------------
+--A hash table sigma => a list of monomials over vertex sigma
+--usage: monomialBasisBiDegree(E,S,deg)
+---------------------------
+monomialBasisBiDegree(List,Ring,ZZ) := (E,S,deg) ->(
+    vert := sort unique flatten E;
+    monB:= hashTable for sigma in vert list 
+    sigma => flatten entries monomials((S_(2*sigma-2)+1)^deg*(S_(2*sigma-1)+1)^deg);--flatten for i from 0 to deg list for j from 0 to deg-i list varsList_(2*sigma-2)^i*varsList_(2*sigma-1)^j;
+    monB
     )
 
 ---------------------------
@@ -193,7 +245,7 @@ TEST /// -* The 2-patches case *-
 -- test code and assertions here
 -- may have as many TEST sections as needed
 E = {{1,2}};
-R = generateAmbientRing(E)
+R = generateAmbientRing(E,QQ)
 r=1;
 mathfraka=(f) -> 2*f-1;--(n_0,n_1)=(3,3)
 mathfraka=(f)-> f^2; -- (n_0,n_1)=(4,3)
@@ -207,24 +259,26 @@ monomialBasisT(E,R,3)
 ///
 
 TEST ///-* The cube case *-
+---Step 1: generating the corresponding cell complex, in this case a cube--
 needsPackage "SimplicialComplexes"
-kk=QQ;
 numfaces = 6;
-r=1;
-R=kk[flatten for i from 1 to numfaces list {u_i,v_i}];
-positionfaces={{0,0,1},{1,0,0},{0,1,0},{-1,0,0},{0,-1,0},{0,0,-1}}
-basisOnChart={{u_1,v_1,1},{1,u_2,v_2},{u_3,1,v_3},{-1,u_4,v_4},{u_5,-1,v_5},{u_6,v_6,-1}}
-T=ZZ[sigma_1..sigma_numfaces,Degrees=>positionfaces]
+positionfaces={{0,0,1},{1,0,0},{0,1,0},{-1,0,0},{0,-1,0},{0,0,-1}};
+T=ZZ[sigma_1..sigma_numfaces,Degrees=>positionfaces];
 Octahedral=simplicialComplex monomialIdeal(sigma_1*sigma_6,sigma_2*sigma_4,sigma_3*sigma_5);
 facesOfCube = (faces(Octahedral))#0;
 edgesOfOct = (faces(Octahedral))#1;
 verticesOfCube = (faces(Octahedral))#2;
-E = {{1,2},{1,3},{1,4},{1,5},{2,3},{2,5},{2,6},{3,4},{3,6},{4,5},{4,6},{5,6}};
+E = for m in edgesOfOct list (indices m)+{1,1};
 vert = unique flatten E;
+
+--Step 2: generating the list of ideals--
+r=1;
+R=generateAmbientRing(E,QQ);
+basisOnChart={{R_0,R_1,1},{1,R_2,R_3},{R_4,1,R_5},{-1,R_6,R_7},{R_8,-1,R_9},{R_10,R_11,-1}};
 
 mathfraka = (f)->(2*f-1);--(n_0,n_1)=(3,3)
 mathfrakb = (f)-> -1;
-Lgtm = (uplus,vplus,uminus,vminus)->({uminus-mathfrakb(uplus)*vplus, vminus-uplus-vplus*mathfraka(uplus)})
+Lgtm = (uplus,vplus,uminus,vminus)->({uminus-mathfrakb(uplus)*vplus, vminus-uplus-vplus*mathfraka(uplus)});
 
 endpoints = (indexface1,indexface2) -> (faces star(Octahedral,sigma_indexface1*sigma_indexface2))#2
 theOtherEndPoint = (indexface1, indexface2, indexface3) -> (
