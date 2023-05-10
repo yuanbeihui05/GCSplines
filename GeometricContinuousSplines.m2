@@ -11,6 +11,7 @@ newPackage(
 
 export {
     "computeBaseField",
+    "exportXYZcoeff",
     "generateAmbientRing",
     "gSplineBasis",
     "monomialBasisBiDegree",
@@ -125,7 +126,9 @@ exportXYZcoeff(Matrix, List, String) := (mP, uvrange, fileName) -> (
       for i from 0 to degree(S_(2*k),polynf) list
       for j from 0 to degree(S_(2*k+1),polynf) list coefficient(S_(2*k)^i*S_(2*k+1)^j,polynf); 
     f << nump << endl;
-    f << toString polycoef << endl;
+    stringPolycoeff := replace("{","[",toString polycoef);
+    stringPolycoeff = replace("}","]",stringPolycoeff);
+    f << stringPolycoeff << endl;
     f << toString uvrange << endl << close;
     f
 )
@@ -329,9 +332,9 @@ SeeAlso
 ///
 
 -* Test section *-
-TEST /// -* The 2-patches case *-
 -- test code and assertions here
 -- may have as many TEST sections as needed
+TEST /// -* The 2-patches case *-
 E = {{1,2}};
 R = generateAmbientRing(E,QQ)
 r=1;
@@ -342,8 +345,12 @@ mathfraka=(f)->-f^2+2*f-1; --(n_0,n_1)=(3,4)
 gtm=(uminus,vminus,uplus,vplus)->{uminus+vplus, vminus-(uplus+vplus*mathfraka(uplus))};
 J = ideal gtm(R_0,R_1,R_2,R_3);
 I = J+ideal(R_0^(r+1),R_3^(r+1));
-gSplineBasis(E,{I},2)
+hTtwopatches = gSplineBasis(E,{I},2)
 monomialBasisT(E,R,3)
+-- test exportXYZcoeff --
+mBasis = hTtwopatches#"basis";
+mP = transpose (mBasis*random(QQ^5,QQ^3));
+exportXYZcoeff(mP,{0,1},"2patches")
 ///
 
 TEST ///-* The cube case *-
@@ -428,13 +435,16 @@ generateItau = (indexface1,indexface2)->(
     vm124 = matrixOfuvAround124_(1,1);
     ideal Lgtm(up123,vp123,um123,vm123)+ideal Lgtm(up124,vp124,um124,vm124)+ideal(um123^(r+1),vp123^(r+1),um124^(r+1),vp124^(r+1))
     )
-
 --hashTable edge => ideals
 hTIdeals = hashTable for e in E list e=>generateItau(first e, last e);
 d = 4;
-gSplineBasis(E, for e in E list hTIdeals#e, d)
+hTcube = gSplineBasis(E, for e in E list hTIdeals#e, d);
+--interpolation
+mBasis = hTcube#"basis";
+mP = mBasis*inverse sub(mBasis, for i from 0 to 11 list R_i=>0)*matrix{{0,0,1/1},{1,0,0},{0,1,0},{-1,0,0},{0,-1,0},{0,0,-1}};
+mP = transpose mP;
+exportXYZcoeff(mP,{-1,1},"cube")
 ///
-
 end--
 
 -* Development section *-
