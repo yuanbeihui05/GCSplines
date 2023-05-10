@@ -1,7 +1,7 @@
 newPackage(
     "GeometricContinuousSplines",
     Version => "0.1",
-    Date => "28 March 2023",
+    Date => "4 May 2023",
     Headline => "This is a package for geometrically continuous splines.",
     Authors => {{ Name => "Beihui Yuan", Email => "by238@cornell.edu", HomePage => "https://sites.google.com/view/beihuiyuan/home"}},
     AuxiliaryFiles => false,
@@ -17,9 +17,64 @@ export {
     "monomialBasisT"
     }
 
+-* Todo *-
+-- Creating an external file for visualization (05/10/2023)--
+
+
 -* Code section *-
 ---------------------------
-computeBaseField = method()
+createPyFile = method()
+---------------------------
+---------------------------
+--This method creates .py file for visualization
+--At present, it is only for square patches 
+---------------------------
+--Inputs:
+---------------------------
+-- mP = a (3xn) matrix, 
+--      giving the x,y,z coordinates, 
+--      each entry is a polynomial
+-- uvrange = a list of two numbers.
+-- fileName = a string, the name of output file
+---------------------------
+--Outputs:
+---------------------------
+--A .py file
+--usage: createPyFile(mP, fileName)
+---------------------------
+createPyFile(Matrix, List, String) := (mP,uvrange,fileName) -> (
+    S := ring mP;
+    nump := numColumns mP;
+    f := concatenate{fileName, ".py"} << ""; --initial a file
+        polycoef := for k from 0 to (nump-1) list
+      for polynf in entries mP_k list
+      for i from 0 to degree(S_(2*k),polynf) list
+      for j from 0 to degree(S_(2*k+1),polynf) list coefficient(S_(2*k)^i*S_(2*k+1)^j,polynf); 
+    f << "import numpy as np" << endl;
+    f << "import pyvista as pv" << endl;
+    f << "" << endl;
+    f << "if __name__ == '__main__':" << endl;
+    f << "    plotter = pv.Plotter()" << endl;
+    f << "    plotter.set_color_cycler(['magenta','seagreen','aqua','orange'])" << endl;
+    f << "    plotter.show_axes_all()" << endl;
+    f << "    plotter.show_grid()" << endl;
+    f << "" << endl;
+    f << "    for _ in range(10): #test, draw 10 random surfaces" << endl;
+    f << "        xyz_poly_coef = np.random.randn(4,4,3)*0.2" << endl;
+    f << "        u = np.linspace(0.0,1.0,20)" << endl;
+    f << "        v = np.linspace(0.0,1.0,20)" << endl;
+    f << "        value = np.polynomial.polynomial.polygrid2d(u,v,xyz_poly_coef)" << endl;
+    f << "" << endl;
+    f << "        mesh = pv.StructuredGrid(value[0],value[1],value[2])" << endl;
+    f << "        plotter.add_mesh(mesh)" << endl;
+    f << "" << endl;
+    f << "    plotter.show()" << endl;
+    f << "    plotter.screenshot(filename='output.png')" << endl << close;
+    f
+)
+
+---------------------------
+computeBaseField = method()--not done yet
 ---------------------------
 ---------------------------
 --This method compute a field extension of QQ such that 
@@ -41,6 +96,39 @@ computeBaseField(List):=(valences) ->(
     f := sum for i from 0 to n-1 list x^i;
     F := extField(QQ,f)
     )
+
+---------------------------
+exportXYZcoeff = method()
+---------------------------
+---------------------------
+--This method creates .txt file containing coefficient matrices
+---------------------------
+--Inputs:
+---------------------------
+-- mP = a (3xn) matrix, 
+--      giving the x,y,z coordinates, 
+--      each entry is a polynomial.
+-- uvrange = a list of two numbers.
+-- fileName = a string, the name of output file.
+---------------------------
+--Outputs:
+---------------------------
+--A .txt file
+--usage: createPyFile(mP, fileName)
+---------------------------
+exportXYZcoeff(Matrix, List, String) := (mP, uvrange, fileName) -> (
+    S := ring mP;
+    nump := numColumns mP;--number of patches
+    f := concatenate{fileName, ".txt"} << ""; --initial a file
+    polycoef := for k from 0 to (nump-1) list
+      for polynf in entries mP_k list
+      for i from 0 to degree(S_(2*k),polynf) list
+      for j from 0 to degree(S_(2*k+1),polynf) list coefficient(S_(2*k)^i*S_(2*k+1)^j,polynf); 
+    f << nump << endl;
+    f << toString polycoef << endl;
+    f << toString uvrange << endl << close;
+    f
+)
 
 ---------------------------
 generateAmbientRing = method()
