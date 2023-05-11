@@ -35,6 +35,7 @@ createPyFile = method()
 -- mP = a (3xn) matrix, 
 --      giving the x,y,z coordinates, 
 --      each entry is a polynomial
+-- deg = a non-negative integer, the degree of the spline space 
 -- uvrange = a list of two numbers.
 -- fileName = a string, the name of output file
 ---------------------------
@@ -43,34 +44,52 @@ createPyFile = method()
 --A .py file
 --usage: createPyFile(mP, fileName)
 ---------------------------
-createPyFile(Matrix, List, String) := (mP,uvrange,fileName) -> (
+createPyFile(Matrix, ZZ, List, String) := (mP,deg,uvrange,fileName) -> (
     S := ring mP;
     nump := numColumns mP;
     f := concatenate{fileName, ".py"} << ""; --initial a file
-        polycoef := for k from 0 to (nump-1) list
+    polycoef := for k from 0 to (nump-1) list
       for polynf in entries mP_k list
       for i from 0 to degree(S_(2*k),polynf) list
       for j from 0 to degree(S_(2*k+1),polynf) list coefficient(S_(2*k)^i*S_(2*k+1)^j,polynf); 
     f << "import numpy as np" << endl;
     f << "import pyvista as pv" << endl;
     f << "" << endl;
+    f << "xyz_poly_coefs = (" << endl;
+    for k from 0 to (nump-1) do(
+        f << "                  np.array([" << endl;
+        for polynf in entries mP_k do(
+            coeffm := for i from 0 to deg list
+            for j from 0 to deg list coefficient(S_(2*k)^i*S_(2*k+1)^j,polynf);
+            stringPolycoeff := replace("{","[",toString coeffm);
+            stringPolycoeff = replace("}","]",stringPolycoeff);
+            f << "stringPolycoeff" << "," << endl;
+        )
+        f << "                    ]).transpose(1,2,0)," << endl;
+        f << "" << endl;
+    )
+    f << "                  )" << endl;
+    stringuvrange := replace("{","[", toString uvrange);
+    stringuvrange = replace("}","]",stringuvrange);
+    f << "uv_ranges = [[" << stringuvrange << stringuvrange << "]]*" << nump << endl;
+    f << "" << endl;
     f << "if __name__ == '__main__':" << endl;
+    f << "    pv.set_plot_theme('paraview')" << endl;
     f << "    plotter = pv.Plotter()" << endl;
-    f << "    plotter.set_color_cycler(['magenta','seagreen','aqua','orange'])" << endl;
+    f << "    plotter.set_color_cycler(['magenta', 'seagreen', 'aqua', 'orange'])" << endl;
     f << "    plotter.show_axes_all()" << endl;
     f << "    plotter.show_grid()" << endl;
+    f << "    plotter.enable_anti_aliasing()" << endl;
     f << "" << endl;
-    f << "    for _ in range(10): #test, draw 10 random surfaces" << endl;
-    f << "        xyz_poly_coef = np.random.randn(4,4,3)*0.2" << endl;
-    f << "        u = np.linspace(0.0,1.0,20)" << endl;
-    f << "        v = np.linspace(0.0,1.0,20)" << endl;
-    f << "        value = np.polynomial.polynomial.polygrid2d(u,v,xyz_poly_coef)" << endl;
+    f << "    for (u_range,v_range),coefs in zip(uv_ranges, xyz_poly_coefs): " << endl;
+    f << "        u = np.linspace(u_range[0], u_range[1], 20)" << endl;
+    f << "        v = np.linspace(v_range[0], v_range[1], 20)" << endl;
+    f << "        value = np.polynomial.polynomial.polygrid2d(u, v, coefs)" << endl;
     f << "" << endl;
-    f << "        mesh = pv.StructuredGrid(value[0],value[1],value[2])" << endl;
-    f << "        plotter.add_mesh(mesh)" << endl;
+    f << "        mesh = pv.StructuredGrid(value[0], value[1], value[2])   " << endl;
+    f << "        plotter.add_mesh(mesh, smooth_shading=True, split_sharp_edges=True)" << endl;
     f << "" << endl;
-    f << "    plotter.show()" << endl;
-    f << "    plotter.screenshot(filename='output.png')" << endl << close;
+    f << "    plotter.show()" << endl << close;
     f
 )
 
