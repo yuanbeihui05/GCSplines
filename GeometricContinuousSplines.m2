@@ -11,6 +11,7 @@ newPackage(
 
 export {
     "computeBaseField",
+    "createPyFile",
     "exportXYZcoeff",
     "generateAmbientRing",
     "gSplineBasis",
@@ -20,6 +21,7 @@ export {
 
 -* Todo *-
 -- Creating an external file for visualization (05/10/2023)--
+-- Give G splines a Type --
 
 
 -* Code section *-
@@ -48,10 +50,6 @@ createPyFile(Matrix, ZZ, List, String) := (mP,deg,uvrange,fileName) -> (
     S := ring mP;
     nump := numColumns mP;
     f := concatenate{fileName, ".py"} << ""; --initial a file
-    polycoef := for k from 0 to (nump-1) list
-      for polynf in entries mP_k list
-      for i from 0 to degree(S_(2*k),polynf) list
-      for j from 0 to degree(S_(2*k+1),polynf) list coefficient(S_(2*k)^i*S_(2*k+1)^j,polynf); 
     f << "import numpy as np" << endl;
     f << "import pyvista as pv" << endl;
     f << "" << endl;
@@ -63,20 +61,24 @@ createPyFile(Matrix, ZZ, List, String) := (mP,deg,uvrange,fileName) -> (
             for j from 0 to deg list coefficient(S_(2*k)^i*S_(2*k+1)^j,polynf);
             stringPolycoeff := replace("{","[",toString coeffm);
             stringPolycoeff = replace("}","]",stringPolycoeff);
-            f << "stringPolycoeff" << "," << endl;
-        )
+            f << "                    " << stringPolycoeff << "," << endl;
+        );
         f << "                    ]).transpose(1,2,0)," << endl;
         f << "" << endl;
-    )
+    );
     f << "                  )" << endl;
     stringuvrange := replace("{","[", toString uvrange);
     stringuvrange = replace("}","]",stringuvrange);
-    f << "uv_ranges = [[" << stringuvrange << stringuvrange << "]]*" << nump << endl;
+    f << "uv_ranges = [[" << stringuvrange << "," << stringuvrange << "]]*" << nump << endl;
     f << "" << endl;
     f << "if __name__ == '__main__':" << endl;
     f << "    pv.set_plot_theme('paraview')" << endl;
     f << "    plotter = pv.Plotter()" << endl;
-    f << "    plotter.set_color_cycler(['magenta', 'seagreen', 'aqua', 'orange'])" << endl;
+    f << "    plotter.set_color_cycler([" << endl;
+    f << "        \"#e60049\", \"#0bb4ff\", \"#50e991\", \"#e6d800\", \"#9b19f5\", " << endl;
+    f << "        \"#ffa300\", \"#dc0ab4\", \"#b3d4ff\", \"#00bfa0\"" << endl;
+    f << "        ])" << endl;
+    --f << "    plotter.set_color_cycler(['magenta', 'seagreen', 'aqua', 'orange'])" << endl;
     f << "    plotter.show_axes_all()" << endl;
     f << "    plotter.show_grid()" << endl;
     f << "    plotter.enable_anti_aliasing()" << endl;
@@ -364,12 +366,15 @@ mathfraka=(f)->-f^2+2*f-1; --(n_0,n_1)=(3,4)
 gtm=(uminus,vminus,uplus,vplus)->{uminus+vplus, vminus-(uplus+vplus*mathfraka(uplus))};
 J = ideal gtm(R_0,R_1,R_2,R_3);
 I = J+ideal(R_0^(r+1),R_3^(r+1));
-hTtwopatches = gSplineBasis(E,{I},2)
+d = 4;
+hTtwopatches = gSplineBasis(E,{I}, d);
 monomialBasisT(E,R,3)
--- test exportXYZcoeff --
+-- test exportXYZcoeff and createPyFile --
 mBasis = hTtwopatches#"basis";
-mP = transpose (mBasis*random(QQ^5,QQ^3));
-exportXYZcoeff(mP,{0,1},"2patches")
+dimS = hTtwopatches#"dimension";
+mP = transpose (mBasis*random(QQ^dimS,QQ^3));
+--exportXYZcoeff(mP,{0,1},"2patches")
+createPyFile(mP,d,{0,1},"2patches")
 ///
 
 TEST ///-* The cube case *-
