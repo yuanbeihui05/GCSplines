@@ -170,7 +170,7 @@ generateAmbientRing = method()
 --A polynomial ring kk[u_sigma,v_sigma:sigma in vert]
 --usage: generateAmbientRing(E)
 ---------------------------
-generateAmbientRing(List,Ring):=(E,kk) ->(
+generateAmbientRing(List,Ring):= Ring => (E,kk) ->(
     vert := sort unique flatten E;
     u := symbol u;
     v := symbol v;
@@ -246,7 +246,7 @@ gSplineBasis = method()
 --up to the given degree
 --usage: gSplineBasis(E, L, d)#"dimension", gSplineBasis(E,L,d)#"basis"
 ---------------------------
-gSplineBasis(List,List,ZZ) := (E,ideals,deg) ->(
+gSplineBasis(List,List,ZZ) := HashTable => (E,ideals,deg) ->(
     vert := sort unique flatten E;
     S:= ring first ideals;
     --one has to input the underlying ring before using this function
@@ -357,7 +357,7 @@ SeeAlso
 -- may have as many TEST sections as needed
 TEST /// -* The 2-patches case *-
 E = {{1,2}};
-R = generateAmbientRing(E,QQ)
+R = generateAmbientRing(E,QQ);
 r=1;
 mathfraka=(f) -> 2*f-1;--(n_0,n_1)=(3,3)
 mathfraka=(f)-> f^2; -- (n_0,n_1)=(4,3)
@@ -375,6 +375,26 @@ dimS = hTtwopatches#"dimension";
 mP = transpose (mBasis*random(QQ^dimS,QQ^3));
 --exportXYZcoeff(mP,{0,1},"2patches")
 createPyFile(mP,d,{0,1},"2patches")
+///
+
+TEST ///-* a star of a vertex (3 faces) *-
+E = {{1,2},{2,3},{3,1}};
+R = generateAmbientRing(E,QQ);
+r=1;
+mathfraka = (f)->-f^2+2*f-1; 
+mathfrakb = (f) -> -1;
+Lgtm = (uplus,vplus,uminus,vminus)->({uminus-mathfrakb(uplus)*vplus, vminus-uplus-vplus*mathfraka(uplus)});
+generateItau = (indexface1,indexface2)->(
+    ideal Lgtm(R_(indexface1*2-2),R_(indexface1*2-1),R_(indexface2*2-2),R_(indexface2*2-1))+ideal(R_(indexface1*2-1)^(r+1),R_(indexface2*2-2)^(r+1))
+    );
+hTIdeals = hashTable for e in E list e=>generateItau(first e, last e);
+d = 4;
+hTthreeSplit = gSplineBasis(E, for e in E list hTIdeals#e, d);
+--interpolation
+mBasis = hTthreeSplit#"basis";
+dimS = hTthreeSplit#"dimension";
+mP = transpose (mBasis*random(QQ^dimS,QQ^3));
+createPyFile(mP,d,{0,1},"starVertex")
 ///
 
 TEST ///-* The cube case *-
