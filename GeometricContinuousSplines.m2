@@ -104,9 +104,9 @@ computeBaseField = method()--not done yet
 --This method compute a field extension of QQ such that 
 --the transition map can be defined over. 
 ---------------------------
---Inputs:
+--Inputs: 
 ---------------------------
---valences = list of valences. Each valence is a positive integer.
+--valences = list of positive integers.
 ---------------------------
 --Outputs:
 ---------------------------
@@ -115,10 +115,13 @@ computeBaseField = method()--not done yet
 ---------------------------
 computeBaseField(List):=(valences) ->(
     n := lcm(valences);
-    x := symbol x; 
-    QQ[x];
-    f := sum for i from 0 to n-1 list x^i;
-    F := extField(QQ,f)
+    KK0 := cyclotomicField(n);
+    ksi := KK0_0;
+    for i in valences do c_i := ksi^(sub(n/i,ZZ))/2+ksi^(sub(n-n/i,ZZ))/2;
+    R := QQ[for i in valences list e_i];
+    phi := map(KK0, R, matrix {for i in valences list c_i});
+    KK := R/ker phi;
+    KK
     )
 
 ---------------------------
