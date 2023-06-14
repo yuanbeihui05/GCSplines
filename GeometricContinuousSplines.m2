@@ -6,7 +6,7 @@ newPackage(
     Authors => {{ Name => "Beihui Yuan", Email => "by238@cornell.edu", HomePage => "https://sites.google.com/view/beihuiyuan/home"}},
     AuxiliaryFiles => false,
     DebuggingMode => false,
-    PackageImports => {"RationalPoints2"}
+    PackageImports => {"Cyclotomic"}
     )
 
 export {
@@ -21,7 +21,9 @@ export {
 
 -* Todo *-
 -- Creating an external file for visualization (05/10/2023)--
--- Give G splines a Type --
+-- Give G splines a Type (?)--
+-- Field Extenstion --
+-- Symmetric gluing data --
 
 
 -* Code section *-
