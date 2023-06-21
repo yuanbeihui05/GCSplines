@@ -6,7 +6,7 @@ newPackage(
     Authors => {{ Name => "Beihui Yuan", Email => "by238@cornell.edu", HomePage => "https://sites.google.com/view/beihuiyuan/home"}},
     AuxiliaryFiles => false,
     DebuggingMode => false,
-    PackageImports => {"Cyclotomic"}
+    PackageExports => {"Cyclotomic"}
     )
 
 export {
@@ -113,13 +113,13 @@ computeBaseField = method()--not done yet
 --A field of extension over QQ.
 --usage: computeBaseField(valences)
 ---------------------------
-computeBaseField(List):=(valences) ->(
+computeBaseField(List):= Ring =>(valences) ->(
     n := lcm(valences);
     KK0 := cyclotomicField(n);
     ksi := KK0_0;
-    for i in valences do c_i := ksi^(sub(n/i,ZZ))/2+ksi^(sub(n-n/i,ZZ))/2;
+    e := symbol e;
     R := QQ[for i in valences list e_i];
-    phi := map(KK0, R, matrix {for i in valences list c_i});
+    phi := map(KK0, R, matrix {for i in valences list ksi^(sub(n/i,ZZ))/2+ksi^(sub(n-n/i,ZZ))/2});
     KK := R/ker phi;
     KK
     )
@@ -506,3 +506,5 @@ uninstallPackage "GeometricContinuousSplines"
 restart
 installPackage "GeometricContinuousSplines"
 viewHelp "GeometricContinuousSplines"
+
+FF = computeBaseField({3,5})
