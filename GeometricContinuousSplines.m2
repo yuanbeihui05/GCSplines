@@ -98,7 +98,7 @@ createPyFile(Matrix, ZZ, List, String) := (mP,deg,uvrange,fileName) -> (
 )
 
 ---------------------------
-computeBaseField = method()--not done yet
+computeBaseField = method()
 ---------------------------
 ---------------------------
 --This method compute a field extension of QQ such that 
@@ -122,6 +122,41 @@ computeBaseField(List):= Ring =>(valences) ->(
     phi := map(KK0, R, matrix {for i in valences list ksi^(sub(n/i,ZZ))/2+ksi^(sub(n-n/i,ZZ))/2});
     KK := R/ker phi;
     KK
+    )
+---------------------------
+createStarVertexPatch = method()--not done yet
+---------------------------
+---------------------------
+--This method compute a basis for G spline spaces over a star of a vertex, 
+--assuming that transition maps are from symmetric gluing data. 
+---------------------------
+--Inputs: 
+---------------------------
+--valences = list of positive integers. May have repetition.
+-------------the 1st entry is the valence of the vertex in the middle
+-------------then input the valences at each vertex clockwisely 
+--deg = a non-negative integer, the degree bound for the spline space
+---------------------------
+--Outputs:
+---------------------------
+--A nested list. A basis for the spline space over base filed RR
+--usage: createStarVertexPatch(valences, degree)
+---------------------------
+---------------------------
+--Function dependence:
+---------------------------
+-- gSplineBasis
+-- computeBaseField
+-- generateAmbientRing
+---------------------------
+createStarVertexPatch(List, ZZ):= List =>(valences, deg) ->(
+    n := #valences;
+    E := for i from 1 to n-2 list {i,i+1};
+    E = E|{{n-1,1}};
+    uniValences = unique valences;
+    posValences = for v in valences list position(uniValences,i->i=v);
+    KK = computeBaseField(uniValences);
+    S = generateAmbientRing(E,KK);
     )
 
 ---------------------------
