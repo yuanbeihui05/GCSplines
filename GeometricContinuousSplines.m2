@@ -12,6 +12,7 @@ newPackage(
 export {
     "computeBaseField",
     "createPyFile",
+    "createStarVertexPatch",
     "exportXYZcoeff",
     "generateAmbientRing",
     "gSplineBasis",
@@ -133,8 +134,7 @@ createStarVertexPatch = method()--not done yet
 --Inputs: 
 ---------------------------
 --valences = list of positive integers. May have repetition.
--------------the 1st entry is the valence of the vertex in the middle
--------------then input the valences at each vertex clockwisely 
+-------------input the valences at each BOUNDARY vertex clockwisely 
 --deg = a non-negative integer, the degree bound for the spline space
 ---------------------------
 --Outputs:
@@ -149,14 +149,29 @@ createStarVertexPatch = method()--not done yet
 -- computeBaseField
 -- generateAmbientRing
 ---------------------------
-createStarVertexPatch(List, ZZ):= List =>(valences, deg) ->(
+createStarVertexPatch(List, ZZ):= (valences, deg) ->(
     n := #valences;
-    E := for i from 1 to n-2 list {i,i+1};
-    E = E|{{n-1,1}};
-    uniValences = unique valences;
-    posValences = for v in valences list position(uniValences,i->i=v);
-    KK = computeBaseField(uniValences);
-    S = generateAmbientRing(E,KK);
+    E := for i from 1 to n-1 list {i,i+1};
+    E = {{n,1}}|E;
+    uniValences := unique ({n}|valences);
+    --uniValences = {n}|uniValences;
+    posValences := for m in valences list position(uniValences,i->i==m);
+    KK := computeBaseField(uniValences);
+    S := generateAmbientRing(E,KK);
+    gluea := (f, i)->(2*KK_(posValences_0)*(1-f)^2-2*KK_(posValences_i)*f^2); 
+    glueb := -1;
+    um := S_(2*n-2);
+    vm := S_(2*n-1);
+    up := S_0;
+    vp := S_1;
+    ideals := {ideal (um^2,vp^2)};
+    for i from 0 to n-2 do (
+        um = S_(2*i);
+        vm = S_(2*i+1);
+        up = S_(2*i+2);
+        vp = S_(2*i+3);
+        ideals = ideals|{ideal(um^2,vp^2)};);
+    ideals
     )
 
 ---------------------------
@@ -542,4 +557,5 @@ restart
 installPackage "GeometricContinuousSplines"
 viewHelp "GeometricContinuousSplines"
 
-FF = computeBaseField({3,5})
+createStarVertexPatch({4,4,4},9)
+createStarVertexPatch({3,5,4,5},9)
