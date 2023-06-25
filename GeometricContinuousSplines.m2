@@ -155,7 +155,7 @@ createStarVertexPatch(List, ZZ):= (valences, deg) ->(
     E = {{n,1}}|E;
     uniValences := unique ({n}|valences);
     --uniValences = {n}|uniValences;
-    posValences := for m in valences list position(uniValences,i->i==m);
+    posValences := for m in ({n}|valences) list position(uniValences,i->i==m);
     KK := computeBaseField(uniValences);
     S := generateAmbientRing(E,KK);
     gluea := (f, i)->(2*KK_(posValences_0)*(1-f)^2-2*KK_(posValences_i)*f^2); 
@@ -164,14 +164,14 @@ createStarVertexPatch(List, ZZ):= (valences, deg) ->(
     vm := S_(2*n-1);
     up := S_0;
     vp := S_1;
-    ideals := {ideal (um^2,vp^2)};
+    ideals := {ideal (um^2,vp^2,um+vp,vm-up-vp*gluea(up,n))};
     for i from 0 to n-2 do (
         um = S_(2*i);
         vm = S_(2*i+1);
         up = S_(2*i+2);
         vp = S_(2*i+3);
-        ideals = ideals|{ideal(um^2,vp^2)};);
-    ideals
+        ideals = ideals|{ideal(um^2,vp^2,um+vp,vm-up-vp*gluea(up,i+1))};);
+    gSplineBasis(E,ideals,deg)
     )
 
 ---------------------------
@@ -557,5 +557,6 @@ restart
 installPackage "GeometricContinuousSplines"
 viewHelp "GeometricContinuousSplines"
 
-createStarVertexPatch({4,4,4},9)
-createStarVertexPatch({3,5,4,5},9)
+createStarVertexPatch({4,4,4},5)
+createStarVertexPatch({3,5,4,5},4)
+createStarVertexPatch({4,4,4,4,4},4)
