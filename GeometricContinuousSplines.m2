@@ -158,6 +158,7 @@ createStarVertexPatch(List, ZZ):= (valences, deg) ->(
     posValences := for m in ({n}|valences) list position(uniValences,i->i==m);
     KK := computeBaseField(uniValences);
     S := generateAmbientRing(E,KK);
+    SRR := generateAmbientRing(E,RR);
     gluea := (f, i)->(2*KK_(posValences_0)*(1-f)^2-2*KK_(posValences_i)*f^2); 
     glueb := -1;
     um := S_(2*n-2);
@@ -171,7 +172,10 @@ createStarVertexPatch(List, ZZ):= (valences, deg) ->(
         up = S_(2*i+2);
         vp = S_(2*i+3);
         ideals = ideals|{ideal(um^2,vp^2,um+vp,vm-up-vp*gluea(up,i+1))};);
-    gSplineBasis(E,ideals,deg)
+    starPatchVertexBasis := gSplineBasis(E,ideals,deg)#"basis";
+    sub(starPatchVertexBasis, 
+    (for i from 0 to #uniValences-1 list (KK_i => cos(2*pi/uniValences_i)))|
+    for j from 0 to 2*n-1 list (S_j => SRR_j))
     )
 
 ---------------------------
