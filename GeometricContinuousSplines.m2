@@ -172,11 +172,11 @@ createStarVertexPatch(List, ZZ):= (valences, deg) ->(
         up = S_(2*i+2);
         vp = S_(2*i+3);
         ideals = ideals|{ideal(um^2,vp^2,um+vp,vm-up-vp*gluea(up,i+1))};);
-    starPatchVertexBasis := gSplineBasis(E,ideals,deg)#"basis";
+    starPatchVertexBasis := (gSplineBasis(E,ideals,deg))#"basis";
     sub(starPatchVertexBasis, 
     (for i from 0 to #uniValences-1 list (KK_i => cos(2*pi/uniValences_i)))|
     for j from 0 to 2*n-1 list (S_j => SRR_j))
-    )
+    )---complete on June 26, 2023.
 
 ---------------------------
 exportXYZcoeff = method()
@@ -230,6 +230,14 @@ generateAmbientRing = method()
 --usage: generateAmbientRing(E)
 ---------------------------
 generateAmbientRing(List,Ring):= Ring => (E,kk) ->(
+    vert := sort unique flatten E;
+    u := symbol u;
+    v := symbol v;
+    S := kk[flatten for sigma in vert list {u_sigma,v_sigma}];
+    S
+    )
+
+generateAmbientRing(List,InexactFieldFamily):= Ring => (E,kk) ->(
     vert := sort unique flatten E;
     u := symbol u;
     v := symbol v;
@@ -561,6 +569,6 @@ restart
 installPackage "GeometricContinuousSplines"
 viewHelp "GeometricContinuousSplines"
 
-createStarVertexPatch({4,4,4},5)
+createStarVertexPatch({4,4,4},3)
 createStarVertexPatch({3,5,4,5},4)
 createStarVertexPatch({4,4,4,4,4},4)
