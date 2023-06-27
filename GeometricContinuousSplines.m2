@@ -569,6 +569,10 @@ restart
 installPackage "GeometricContinuousSplines"
 viewHelp "GeometricContinuousSplines"
 
-createStarVertexPatch({4,4,4},3)
-createStarVertexPatch({3,5,4,5},4)
-createStarVertexPatch({4,4,4,4,4},4)
+d = 4;
+mBasis = createStarVertexPatch({4,4,4},d);
+mBasis = createStarVertexPatch({5,5,5},d);
+mBasis = createStarVertexPatch({4,4,4,4,4},d);
+mBasis = createStarVertexPatch({3,3,3,3,3,3},d);
+mP = transpose(mBasis*random(QQ^(numColumns mBasis),QQ^3));
+createPyFile(mP,d,{0,1},"starVertex");
