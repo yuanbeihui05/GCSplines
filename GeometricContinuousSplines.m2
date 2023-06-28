@@ -16,6 +16,7 @@ export {
     "exportXYZcoeff",
     "generateAmbientRing",
     "gSplineBasis",
+    "interpolationAtMiddlePoints",
     "monomialBasisBiDegree",
     "monomialBasisT"
     }
@@ -139,8 +140,8 @@ createStarVertexPatch = method()--not done yet
 ---------------------------
 --Outputs:
 ---------------------------
---A nested list. A basis for the spline space over base filed RR
---usage: createStarVertexPatch(valences, degree)
+--A matrix. A basis for the spline space over base filed RR
+--usage: createStarVertexPatch(valences, deg)
 ---------------------------
 ---------------------------
 --Function dependence:
@@ -244,6 +245,32 @@ generateAmbientRing(List,InexactFieldFamily):= Ring => (E,kk) ->(
     S := kk[flatten for sigma in vert list {u_sigma,v_sigma}];
     S
     )
+
+---------------------------
+interpolationAtMiddlePoints = method()
+---------------------------
+---------------------------
+--This method computes subspaces of splines passing through given points 
+---------------------------
+--Inputs:
+---------------------------
+-- mBasis = a matrix of the basis of spline space, 
+-- points3D = a matrix of points in 3D
+---------------------------
+--Outputs:
+---------------------------
+--A matrix of bases of splines passing through given points
+--usage: interpolationAtMiddlePoints()
+---------------------------
+interpolationAtMiddlePoints(Matrix, Matrix) := (mBasis, points3D) -> (
+    S:= ring mBasis_(0,0);
+    varsS := flatten entries vars S;
+    n := numRows mBasis;
+    A := sub(mBasis, flatten for i from 0 to n-1 list {S_(2*i) => 0.0, S_(2*i+1) => 1.0});
+    kerA := gens ker A;
+    B := solve(A,points3D);
+    (mBasis*kerA, mBasis*B)
+)
 
 ---------------------------
 monomialBasisBiDegree = method()
@@ -569,10 +596,27 @@ restart
 installPackage "GeometricContinuousSplines"
 viewHelp "GeometricContinuousSplines"
 
-d = 4;
-mBasis = createStarVertexPatch({4,4,4},d);
-mBasis = createStarVertexPatch({5,5,5},d);
-mBasis = createStarVertexPatch({4,4,4,4,4},d);
-mBasis = createStarVertexPatch({3,3,3,3,3,3},d);
+d = 3;
+valences = {4,4,4};
+valences = {5,5,5};
+valences = {4,4,4,4,4};
+valences = {3,3,3,3,3,3};
+mBasis = createStarVertexPatch(valences,d);
+
+n = #valences;
+points3D = matrix for i from 1 to n list {20*cos(2*i*pi/n),20*sin(2*i*pi/n),0};
+(mBasisInt0,mBasisInt1) = interpolationAtMiddlePoints(mBasis,points3D);
 mP = transpose(mBasis*random(QQ^(numColumns mBasis),QQ^3));
+mP = transpose(mBasisInt0*random(QQ^(numColumns mBasisInt0),QQ^3)+mBasisInt1);
+
+--S = ring mP_(0,0);
+--varsS = flatten entries vars S;
+--points3D = transpose sub(mP, for v in varsS list (v => 0.5));
+S = ring mBasis_(0,0)
+n = numRows mBasis
+--flatten for i from 0 to n-1 list {S_(2*i)=>0 ,S_(2*i+1)=>1}
+A = sub(mBasis, flatten for i from 0 to n-1 list {S_(2*i)=>1 ,S_(2*i+1)=>0})
+solve(A, points3D)
+
 createPyFile(mP,d,{0,1},"starVertex");
+createPyFile(mBasisInt1,d,{0,1},"starVertex");
